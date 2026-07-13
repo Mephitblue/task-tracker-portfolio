@@ -1,0 +1,44 @@
+services:
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tasktracker
+      POSTGRES_USER: taskuser
+      POSTGRES_PASSWORD: taskpass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d tasktracker"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  task-tracker:
+    build:
+      context: ./task-tracker
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tasktracker
+      SPRING_DATASOURCE_USERNAME: taskuser
+      SPRING_DATASOURCE_PASSWORD: taskpass
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "8080:8080"
+
+  test-runner:
+    build:
+      context: ./test-runner
+      dockerfile: Dockerfile
+    environment:
+      BASE_URL: http://task-tracker:8080
+    depends_on:
+      task-tracker:
+        condition: service_healthy
+    volumes:
+      - ./test-runner/target:/app/target
