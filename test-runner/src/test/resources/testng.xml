@@ -1,0 +1,22 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Task Tracker Integration Tests" verbose="1">
+
+    <test name="User Tests">
+        <classes>
+            <class name="com.keithlamond.tasktracker.tests.UserTests"/>
+        </classes>
+    </test>
+
+    <test name="Task CRUD Tests">
+        <classes>
+            <class name="com.keithlamond.tasktracker.tests.TaskCrudTests"/>
+        </classes>
+    </test>
+
+    <test name="Task Status Tests">
+        <classes>
+            <class name="com.keithlamond.tasktracker.tests.TaskStatusTests"/>
+        </classes>
+    </test>
+
+</suite>
