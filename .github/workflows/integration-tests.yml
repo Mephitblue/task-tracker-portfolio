@@ -1,0 +1,53 @@
+name: Task Tracker Integration Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build task-tracker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./task-tracker
+          push: false
+          load: true
+          tags: task-tracker:ci
+          cache-from: type=gha,scope=task-tracker
+          cache-to: type=gha,mode=max,scope=task-tracker
+
+      - name: Build test-runner image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./test-runner
+          push: false
+          load: true
+          tags: test-runner:ci
+          cache-from: type=gha,scope=test-runner
+          cache-to: type=gha,mode=max,scope=test-runner
+
+      - name: Run integration tests
+        run: docker compose -f docker-compose.ci.yml up --exit-code-from test-runner
+
+      - name: Tear down containers
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down --volumes
+
+      - name: Upload TestNG reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testng-reports
+          path: test-runner/target/surefire-reports/
+          retention-days: 14
